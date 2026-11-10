@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wrapped & Tracked - @yourcsbigsister</title>
+    <style>
+        :root {
+            --bg-dark: #0f0e17;
+            --surface: #1e1b2e;
+            --primary: #ff758c;
+            --primary-glow: rgba(255, 117, 140, 0.3);
+            --text-main: #fffffe;
+            --text-muted: #a7a9be;
+            --border: #2a2640;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 40px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        @media (max-width: 900px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .theme-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-dark);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .theme-btn.active {
+            border-color: var(--primary);
+            color: var(--text-main);
+            background: rgba(255, 117, 140, 0.1);
+        }
+
+        /* Habit Table Grid */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        th, td {
+            padding: 6px 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        td.habit-name {
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-main);
+            padding-right: 12px;
+            white-space: nowrap;
+        }
+
+        input[type="checkbox"] {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-dark);
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        input[type="checkbox"]:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+            background-size: 14px;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* Input fields for vibes */
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        canvas {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 4px 15px rgba(255, 117, 140, 0.4);
+        }
+
+        .download-btn:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .download-btn:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Wrapped & Tracked</h1>
+        <p>Tick off your habits across the month and instantly generate your aesthetic summary card.</p>
+    </header>
+
+    <div class="main-container">
+        <!-- Controls & Habit Tracker Grid -->
+        <div class="control-panel">
+            <div class="section-title">
+                <span>Select Color Vibe</span>
+            </div>
+            <div class="theme-selector">
+                <button class="theme-btn active" onclick="setTheme('neon')">Neon Pink</button>
+                <button class="theme-btn" onclick="setTheme('lavender')">Lavender</button>
+                <button class="theme-btn" onclick="setTheme('sunset')">Sunset</button>
+                <button class="theme-btn" onclick="setTheme('mint')">Mint</button>
+            </div>
+
+            <div class="section-title">
+                <span>Monthly Habit Tracker (Days 1 - 7)</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Click boxes to log</span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="habit-name">Habit</th>
+                            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+                        </tr>
+                    </thead>
+                    <tbody id="habit-grid">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="input-group">
+                <label>Vibe / Heavy Rotation Track</label>
+                <input type="text" id="trackInput" value="Sammy Virji - If U Need It" oninput="drawCard()">
+            </div>
+
+            <div class="input-group">
+                <label>Custom Footer Quote</label>
+                <input type="text" id="quoteInput" value="First, solve the problem. Then, write the code." oninput="drawCard()">
+            </div>
+        </div>
+
+        <!-- Live Preview Panel -->
+        <div class="preview-panel">
+            <div class="section-title" style="width: 100%; margin-bottom: 16px;">Live Card Preview</div>
+            <!-- Hidden high-res canvas (1080x1350) -->
+            <canvas id="wrappedCanvas" width="1080" height="1350"></canvas>
+            <button class="download-btn" onclick="downloadCard()">Download Card (PNG)</button>
+        </div>
+    </div>
+
+    <script>
+        // Themes Configuration
+        const themes = {
+            neon: { top: [18, 18, 24], bottom: [45, 27, 43], accent: "#ff758c", cardBg: [25, 22, 32] },
+            lavender: { top: [20, 18, 30], bottom: [42, 35, 60], accent: "#b19cd9", cardBg: [28, 25, 40] },
+            sunset: { top: [26, 18, 20], bottom: [60, 35, 25], accent: "#ffa07a", cardBg: [35, 25, 26] },
+            mint: { top: [15, 24, 22], bottom: [24, 48, 42], accent: "#a8e6cf", cardBg: [20, 32, 28] }
+        };
+        let currentTheme = themes.neon;
+
+        function setTheme(themeName) {
+            currentTheme = themes[themeName];
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update UI primary CSS variable
+            document.documentElement.style.setProperty('--primary', currentTheme.accent);
+            drawCard();
+        }
+
+        // Initialize Habit Data (4 core habits across 7 days)
+        const habits = [
+            { name: "💻 Coding / CS", checks: [true, true, false, true, true, false, true] },
+            { name: "🏃‍♀️ Running / Gym", checks: [true, false, true, true, false, true, true] },
+            { name: "📚 Deep Work", checks: [false, true, true, true, true, true, false] },
+            { name: "💧 Hydration Goal", checks: [true, true, true, true, true, true, true] }
+        ];
+
+        function renderGrid() {
+            const tbody = document.getElementById('habit-grid');
+            tbody.innerHTML = '';
+            habits.forEach((habit, hIndex) => {
+                let tr = document.createElement('tr');
+                let tdName = document.createElement('td');
+                tdName.className = 'habit-name';
+                tdName.innerText = habit.name;
+                tr.appendChild(tdName);
+
+                habit.checks.forEach((isChecked, dIndex) => {
+                    let td = document.createElement('td');
+                    let checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = isChecked;
+                    checkbox.onchange = (e) => {
+                        habits[hIndex].checks[dIndex] = e.target.checked;
+                        drawCard();
+                    };
+                    td.appendChild(checkbox);
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        function drawCard() {
+            const canvas = document.getElementById('wrappedCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = 1080;
+            const height = 1350;
+
+            // 1. Draw gradient background
+            for (let y = 0; y < height; y++) {
+                let r = Math.floor(currentTheme.top[0] + (currentTheme.bottom[0] - currentTheme.top[0]) * (y / height));
+                let g = Math.floor(currentTheme.top[1] + (currentTheme.bottom[1] - currentTheme.top[1]) * (y / height));
+                let b = Math.floor(currentTheme.top[2] + (currentTheme.bottom[2] - currentTheme.top[2]) * (y / height));
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fillRect(0, y, width, 1);
+            }
+
+            // 2. Header Branding
+            ctx.fillStyle = currentTheme.accent;
+            ctx.font = "bold 28px sans-serif";
+            ctx.fillText("@YOURCSBIGSISTER", 80, 120);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 64px sans-serif";
+            ctx.fillText("MONTHLY WRAPPED", 80, 200);
+
+            ctx.fillStyle = "#a7a9be";
+            ctx.font = "32px sans-serif";
+            ctx.fillText("NOV 02 - NOV 08 SUMMARY", 80, 260);
+
+            // Accent Pill Divider
+            ctx.fillStyle = currentTheme.accent;
+            ctx.fillRect(80, 310, 140, 8);
+
+            // 3. Compute stats from checkbox grid
+            let totalChecked = 0;
+            let totalPossible = habits.length * 7;
+            habits.forEach(h => h.checks.forEach(c => { if(c) totalChecked++; }));
+            let consistencyRate = Math.round((totalChecked / totalPossible) * 100);
+
+            // Stat Block 1: Consistency Score
+            ctx.fillStyle = "#a7a9be";
+            ctx.font = "30px sans-serif";
+            ctx.fillText("CONSISTENCY SCORE", 80, 420);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 88px sans-serif";
+            ctx.fillText(`${consistencyRate}%`, 80, 510);
+
+            // Stat Block 2: Habits Completed
+            ctx.fillStyle = "#a7a9be";
+            ctx.font = "30px sans-serif";
+            ctx.fillText("HABITS COMPLETED", 80, 630);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 88px sans-serif";
+            ctx.fillText(`${totalChecked} / ${totalPossible} TASKS`, 80, 720);
+
+            // Stat Block 3: Heavy Rotation Audio
+            ctx.fillStyle = "#a7a9be";
+            ctx.font = "30px sans-serif";
+            ctx.fillText("HEAVY ROTATION AUDIO", 80, 840);
+            let trackText = document.getElementById('trackInput').value;
+            ctx.fillStyle = currentTheme.accent;
+            ctx.font = "bold 44px sans-serif";
+            ctx.fillText(trackText, 80, 905);
+
+            // 4. Footer Quote Card Box
+            ctx.fillStyle = `rgb(${currentTheme.cardBg.join(',')})`;
+            ctx.strokeStyle = "rgba(255,255,255,0.1)";
+            ctx.lineWidth = 2;
+            
+            // Rounded rectangle helper
+            roundRect(ctx, 80, 1030, 920, 180, 24, true, true);
+
+            ctx.fillStyle = "#e0e0e6";
+            ctx.font = "italic 32px sans-serif";
+            let quoteText = `"${document.getElementById('quoteInput').value}"`;
+            wrapText(ctx, quoteText, 130, 1100, 820, 45);
+
+            // Request browser display update
+        }
+
+        function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+        }
+
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            let words = text.split(' ');
+            let line = '';
+            for(let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = context.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    context.fillText(line, x, y);
+                    line = words[n] + ' ';
+                    y += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            context.fillText(line, x, y);
+        }
+
+        function downloadCard() {
+            const canvas = document.getElementById('wrappedCanvas');
+            const link = document.createElement('a');
+            link.download = 'habit_wrapped_card.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            renderGrid();
+            drawCard();
+        };
+    </script>
+</body>
+</html>
