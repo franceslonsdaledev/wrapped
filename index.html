@@ -110,6 +110,37 @@
             background: rgba(255, 117, 140, 0.1);
         }
 
+        /* Week Navigation Bar */
+        .week-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin-bottom: 20px;
+        }
+
+        .week-nav button {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .week-nav button:hover {
+            border-color: var(--primary);
+        }
+
+        .week-label {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
         /* Habit Table Grid */
         .table-wrapper {
             overflow-x: auto;
@@ -131,6 +162,7 @@
         th {
             color: var(--text-muted);
             font-weight: 600;
+            font-size: 0.75rem;
         }
 
         td.habit-info {
@@ -145,7 +177,7 @@
         }
 
         .habit-badge {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--primary);
             background: rgba(255, 117, 140, 0.1);
             padding: 2px 6px;
@@ -174,6 +206,22 @@
             background-repeat: no-repeat;
         }
 
+        .numeric-input {
+            width: 50px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            text-align: center;
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 0.8rem;
+        }
+
+        .numeric-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
         .delete-btn {
             background: none;
             border: none;
@@ -199,7 +247,7 @@
 
         .form-row {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
+            grid-template-columns: 2fr 1.2fr 1fr;
             gap: 10px;
             margin-bottom: 10px;
         }
@@ -236,26 +284,41 @@
             color: var(--primary);
         }
 
-        /* Input fields for vibes */
-        .input-group {
+        /* Card Export Settings */
+        .export-settings {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
             margin-bottom: 16px;
+        }
+
+        .export-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
         }
 
         .input-group label {
             display: block;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .input-group input {
             width: 100%;
-            padding: 10px 14px;
-            background: var(--bg-dark);
+            padding: 8px 12px;
+            background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 8px;
             color: var(--text-main);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .input-group input:focus {
@@ -308,11 +371,11 @@
 
     <header>
         <h1>Wrapped & Tracked</h1>
-        <p>Custom habit tracking with movement targets and daily streak summaries.</p>
+        <p>Persistent calendar logs with multi-type metrics and custom date-range summaries.</p>
     </header>
 
     <div class="main-container">
-        <!-- Controls & Habit Tracker Grid -->
+        <!-- Control Panel -->
         <div class="control-panel">
             <div class="section-title">
                 <span>Select Color Vibe</span>
@@ -324,21 +387,29 @@
                 <button class="theme-btn" onclick="setTheme('mint')">Mint</button>
             </div>
 
+            <!-- Week Navigation -->
+            <div class="week-nav">
+                <button onclick="changeWeek(-1)">← Prev Week</button>
+                <span class="week-label" id="currentWeekDisplay">Loading...</span>
+                <button onclick="changeWeek(1)">Next Week →</button>
+            </div>
+
             <div class="section-title">
-                <span>Manage Habits & Days</span>
+                <span>Manage Habits & Metrics</span>
             </div>
 
             <!-- Add Habit Form -->
             <div class="add-habit-form">
                 <div class="form-row">
-                    <input type="text" id="newHabitName" placeholder="Habit name (e.g. Gym Session)">
-                    <select id="newHabitType">
+                    <input type="text" id="newHabitName" placeholder="Name (e.g. Water L / Steps)">
+                    <select id="newHabitType" onchange="toggleTargetField()">
                         <option value="daily">Daily Habit (%)</option>
                         <option value="movement">Movement (Target/Wk)</option>
+                        <option value="numeric">Numeric Metric (Sum)</option>
                     </select>
-                    <input type="number" id="newHabitTarget" value="3" min="1" max="7" title="Target per week (Movement only)">
+                    <input type="text" id="newHabitExtra" placeholder="Target (e.g. 3)" style="display:none;">
                 </div>
-                <button class="add-btn" onclick="addHabit()">+ Add New Habit</button>
+                <button class="add-btn" onclick="addHabit()">+ Add Tracking Item</button>
             </div>
 
             <!-- Habit Table -->
@@ -346,8 +417,14 @@
                 <table>
                     <thead>
                         <tr>
-                            <th class="habit-info">Habit</th>
-                            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+                            <th class="habit-info">Metric</th>
+                            <th id="d0-header">Mon</th>
+                            <th id="d1-header">Tue</th>
+                            <th id="d2-header">Wed</th>
+                            <th id="d3-header">Thu</th>
+                            <th id="d4-header">Fri</th>
+                            <th id="d5-header">Sat</th>
+                            <th id="d6-header">Sun</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -357,8 +434,23 @@
                 </table>
             </div>
 
+            <!-- Summary Date Range Picker -->
+            <div class="export-settings">
+                <div class="section-title" style="font-size: 0.95rem; margin-bottom: 10px;">Card Summary Date Range</div>
+                <div class="export-row">
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label>Start Date</label>
+                        <input type="date" id="startDateInput" onchange="drawCard()">
+                    </div>
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label>End Date</label>
+                        <input type="date" id="endDateInput" onchange="drawCard()">
+                    </div>
+                </div>
+            </div>
+
             <div class="input-group">
-                <label>Vibe / Heavy Rotation Track</label>
+                <label>Heavy Rotation Audio / Vibe</label>
                 <input type="text" id="trackInput" value="Sammy Virji - If U Need It" oninput="drawCard()">
             </div>
 
@@ -394,19 +486,76 @@
             drawCard();
         }
 
-        // Initial Habit Data supporting types: 'daily' or 'movement'
-        let habits = [
-            { id: 1, name: "💻 Coding / CS", type: "daily", target: 7, checks: [true, true, false, true, true, false, true] },
-            { id: 2, name: "🏋️‍♀️ Gym Session", type: "movement", target: 2, checks: [true, false, true, false, false, false, false] },
-            { id: 3, name: "🏃‍♀️ Running", type: "movement", target: 3, checks: [false, true, true, false, true, false, false] },
-            { id: 4, name: "💧 Hydration", type: "daily", target: 7, checks: [true, true, true, true, true, true, true] }
+        // State Management
+        let currentMondayOffset = 0; // weeks offset from current week
+        let habits = JSON.parse(localStorage.getItem('wrapped_habits')) || [
+            { id: 1, name: "💻 Coding / CS", type: "daily", target: 7 },
+            { id: 2, name: "🏋️‍♀️ Gym Session", type: "movement", target: 2 },
+            { id: 3, name: "💧 Water (L)", type: "numeric", target: 0 },
+            { id: 4, name: "👟 Steps (k)", type: "numeric", target: 0 }
         ];
 
+        // Logs stored by date string 'YYYY-MM-DD' -> { habitId: value }
+        let logs = JSON.parse(localStorage.getItem('wrapped_logs')) || {};
+
+        function saveState() {
+            localStorage.setItem('wrapped_habits', JSON.stringify(habits));
+            localStorage.setItem('wrapped_logs', JSON.stringify(logs));
+        }
+
+        // Date helpers
+        function getMonday(offsetWeeks = 0) {
+            let d = new Date();
+            let day = d.getDay();
+            let diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            let monday = new Date(d.setDate(diff));
+            monday.setDate(monday.getDate() + (offsetWeeks * 7));
+            monday.setHours(0,0,0,0);
+            return monday;
+        }
+
+        function formatDateKey(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function getWeekDays() {
+            let monday = getMonday(currentMondayOffset);
+            let days = [];
+            for (let i = 0; i < 7; i++) {
+                let d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                days.push(d);
+            }
+            return days;
+        }
+
+        function initDatePickers() {
+            let today = new Date();
+            let pastWeek = new Date();
+            pastWeek.setDate(today.getDate() - 7);
+            
+            document.getElementById('startDateInput').value = formatDateKey(pastWeek);
+            document.getElementById('endDateInput').value = formatDateKey(today);
+        }
+
         function renderGrid() {
+            let weekDays = getWeekDays();
+            
+            // Header label
+            let startStr = weekDays[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            let endStr = weekDays[6].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            document.getElementById('currentWeekDisplay').innerText = `${startStr} - ${endStr}`;
+
+            // Update column headers
+            weekDays.forEach((d, idx) => {
+                let label = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
+                document.getElementById(`d${idx}-header`).innerText = label;
+            });
+
             const tbody = document.getElementById('habit-grid');
             tbody.innerHTML = '';
-            
-            habits.forEach((habit, hIndex) => {
+
+            habits.forEach((habit) => {
                 let tr = document.createElement('tr');
                 
                 let tdInfo = document.createElement('td');
@@ -419,22 +568,43 @@
 
                 let badgeSpan = document.createElement('span');
                 badgeSpan.className = 'habit-badge';
-                badgeSpan.innerText = habit.type === 'movement' ? `Target: ${habit.target}x/wk` : 'Daily Habit';
+                if (habit.type === 'movement') badgeSpan.innerText = `Target: ${habit.target}x/wk`;
+                else if (habit.type === 'numeric') badgeSpan.innerText = `Numeric Total`;
+                else badgeSpan.innerText = 'Daily Habit';
                 tdInfo.appendChild(badgeSpan);
                 
                 tr.appendChild(tdInfo);
 
-                // 7 day checkboxes
-                habit.checks.forEach((isChecked, dIndex) => {
+                // 7 days inputs
+                weekDays.forEach((d) => {
+                    let dateKey = formatDateKey(d);
+                    if (!logs[dateKey]) logs[dateKey] = {};
+
                     let td = document.createElement('td');
-                    let checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.checked = isChecked;
-                    checkbox.onchange = (e) => {
-                        habits[hIndex].checks[dIndex] = e.target.checked;
-                        drawCard();
-                    };
-                    td.appendChild(checkbox);
+
+                    if (habit.type === 'numeric') {
+                        let input = document.createElement('input');
+                        input.type = 'number';
+                        input.step = '0.1';
+                        input.className = 'numeric-input';
+                        input.value = logs[dateKey][habit.id] ?? '';
+                        input.oninput = (e) => {
+                            logs[dateKey][habit.id] = e.target.value === '' ? '' : parseFloat(e.target.value);
+                            saveState();
+                            drawCard();
+                        };
+                        td.appendChild(input);
+                    } else {
+                        let checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.checked = !!logs[dateKey][habit.id];
+                        checkbox.onchange = (e) => {
+                            logs[dateKey][habit.id] = e.target.checked;
+                            saveState();
+                            drawCard();
+                        };
+                        td.appendChild(checkbox);
+                    }
                     tr.appendChild(td);
                 });
 
@@ -443,9 +613,9 @@
                 let delBtn = document.createElement('button');
                 delBtn.className = 'delete-btn';
                 delBtn.innerHTML = '&times;';
-                delBtn.title = 'Delete habit';
                 delBtn.onclick = () => {
-                    habits.splice(hIndex, 1);
+                    habits = habits.filter(h => h.id !== habit.id);
+                    saveState();
                     renderGrid();
                     drawCard();
                 };
@@ -456,10 +626,26 @@
             });
         }
 
+        function changeWeek(direction) {
+            currentMondayOffset += direction;
+            renderGrid();
+        }
+
+        function toggleTargetField() {
+            let type = document.getElementById('newHabitType').value;
+            let extra = document.getElementById('newHabitExtra');
+            if (type === 'movement') {
+                extra.style.display = 'block';
+                extra.placeholder = 'Target per week (e.g. 3)';
+            } else {
+                extra.style.display = 'none';
+            }
+        }
+
         function addHabit() {
-            const nameInput = document.getElementById('newHabitName');
-            const typeSelect = document.getElementById('newHabitType');
-            const targetInput = document.getElementById('newHabitTarget');
+            let nameInput = document.getElementById('newHabitName');
+            let typeSelect = document.getElementById('newHabitType');
+            let extraInput = document.getElementById('newHabitExtra');
 
             if (!nameInput.value.trim()) return;
 
@@ -467,15 +653,17 @@
                 id: Date.now(),
                 name: nameInput.value.trim(),
                 type: typeSelect.value,
-                target: parseInt(targetInput.value) || 3,
-                checks: [false, false, false, false, false, false, false]
+                target: typeSelect.value === 'movement' ? (parseInt(extraInput.value) || 3) : 0
             });
 
             nameInput.value = '';
+            extraInput.value = '';
+            saveState();
             renderGrid();
             drawCard();
         }
 
+        // Aggregation for Date Range Card
         function drawCard() {
             const canvas = document.getElementById('wrappedCanvas');
             const ctx = canvas.getContext('2d');
@@ -498,64 +686,93 @@
 
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 64px sans-serif";
-            ctx.fillText("WEEKLY WRAPPED", 80, 200);
+            ctx.fillText("CUSTOM WRAPPED", 80, 200);
+
+            let startVal = document.getElementById('startDateInput').value;
+            let endVal = document.getElementById('endDateInput').value;
+            let dateRangeLabel = (startVal && endVal) ? `${startVal} to ${endVal}` : "SUMMARY RANGE";
 
             ctx.fillStyle = "#a7a9be";
             ctx.font = "32px sans-serif";
-            ctx.fillText("NOV 02 - NOV 08 SUMMARY", 80, 260);
+            ctx.fillText(dateRangeLabel, 80, 260);
 
             ctx.fillStyle = currentTheme.accent;
             ctx.fillRect(80, 310, 140, 8);
 
-            // 3. Compute stats based on habit type categories
+            // 3. Compute stats across date range
+            let startDate = startVal ? new Date(startVal) : new Date(0);
+            let endDate = endVal ? new Date(endVal) : new Date();
+            endDate.setHours(23,59,59,999);
+
+            // Collect all dates in logs within range
+            let totalDaysInRange = 0;
+            let activeLogsInRange = {};
+            
+            Object.keys(logs).forEach(dateStr => {
+                let d = new Date(dateStr);
+                if (d >= startDate && d <= endDate) {
+                    totalDaysInRange++;
+                    activeLogsInRange[dateStr] = logs[dateStr];
+                }
+            });
+
+            let startY = 400;
+
+            // Daily Habit Consistency
             let dailyHabits = habits.filter(h => h.type === 'daily');
-            let movementHabits = habits.filter(h => h.type === 'movement');
-
-            // Daily consistency score
-            let dailyChecked = 0;
-            let dailyPossible = dailyHabits.length * 7;
-            dailyHabits.forEach(h => h.checks.forEach(c => { if(c) dailyChecked++; }));
-            let dailyScore = dailyPossible > 0 ? Math.round((dailyChecked / dailyPossible) * 100) : 100;
-
-            // Stat Block 1: Daily Consistency Score
-            ctx.fillStyle = "#a7a9be";
-            ctx.font = "30px sans-serif";
-            ctx.fillText("DAILY HABIT CONSISTENCY", 80, 420);
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 88px sans-serif";
-            ctx.fillText(`${dailyScore}%`, 80, 510);
-
-            // Stat Block 2: Movement Breakdown (e.g., Gym: 2/2, Running: 2/3)
-            ctx.fillStyle = "#a7a9be";
-            ctx.font = "30px sans-serif";
-            ctx.fillText("MOVEMENT TARGETS", 80, 630);
-
-            let moveY = 690;
-            if (movementHabits.length === 0) {
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 44px sans-serif";
-                ctx.fillText("No movement goals set", 80, moveY + 45);
-            } else {
-                movementHabits.forEach(h => {
-                    let actualCount = h.checks.filter(Boolean).length;
-                    ctx.fillStyle = "#ffffff";
-                    ctx.font = "bold 40px sans-serif";
-                    ctx.fillText(`${h.name}:`, 80, moveY);
-                    
-                    ctx.fillStyle = currentTheme.accent;
-                    ctx.fillText(`${actualCount} / ${h.target} sessions`, 500, moveY);
-                    moveY += 60;
+            if (dailyHabits.length > 0) {
+                let totalPossible = dailyHabits.length * Math.max(totalDaysInRange, 1);
+                let totalChecked = 0;
+                dailyHabits.forEach(h => {
+                    Object.values(activeLogsInRange).forEach(dayLog => {
+                        if (dayLog[h.id]) totalChecked++;
+                    });
                 });
+                let score = Math.round((totalChecked / totalPossible) * 100);
+
+                ctx.fillStyle = "#a7a9be";
+                ctx.font = "26px sans-serif";
+                ctx.fillText("DAILY HABIT CONSISTENCY", 80, startY);
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 72px sans-serif";
+                ctx.fillText(`${score}%`, 80, startY + 80);
+                startY += 160;
             }
 
-            // Stat Block 3: Heavy Rotation Audio
+            // Numeric Metrics Summary (Sum / Average)
+            let numericHabits = habits.filter(h => h.type === 'numeric');
+            if (numericHabits.length > 0) {
+                ctx.fillStyle = "#a7a9be";
+                ctx.font = "26px sans-serif";
+                ctx.fillText("NUMERIC TOTALS & AVERAGES", 80, startY);
+                startY += 50;
+
+                numericHabits.forEach(h => {
+                    let sum = 0;
+                    Object.values(activeLogsInRange).forEach(dayLog => {
+                        let val = parseFloat(dayLog[h.id]);
+                        if (!isNaN(val)) sum += val;
+                    });
+                    let avg = totalDaysInRange > 0 ? (sum / totalDaysInRange).toFixed(1) : 0;
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "bold 36px sans-serif";
+                    ctx.fillText(`${h.name}:`, 80, startY);
+                    ctx.fillStyle = currentTheme.accent;
+                    ctx.fillText(`Total: ${sum.toFixed(1)} (Avg: ${avg}/day)`, 420, startY);
+                    startY += 55;
+                });
+                startY += 30;
+            }
+
+            // Heavy Rotation Audio
             ctx.fillStyle = "#a7a9be";
-            ctx.font = "30px sans-serif";
-            ctx.fillText("HEAVY ROTATION AUDIO", 80, 920);
+            ctx.font = "26px sans-serif";
+            ctx.fillText("HEAVY ROTATION AUDIO", 80, Math.max(startY, 900));
             let trackText = document.getElementById('trackInput').value;
             ctx.fillStyle = currentTheme.accent;
-            ctx.font = "bold 42px sans-serif";
-            ctx.fillText(trackText, 80, 985);
+            ctx.font = "bold 38px sans-serif";
+            ctx.fillText(trackText, 80, Math.max(startY + 50, 955));
 
             // 4. Footer Quote Card Box
             ctx.fillStyle = `rgb(${currentTheme.cardBg.join(',')})`;
@@ -564,9 +781,9 @@
             roundRect(ctx, 80, 1060, 920, 180, 24, true, true);
 
             ctx.fillStyle = "#e0e0e6";
-            ctx.font = "italic 32px sans-serif";
+            ctx.font = "italic 30px sans-serif";
             let quoteText = `"${document.getElementById('quoteInput').value}"`;
-            wrapText(ctx, quoteText, 130, 1130, 820, 45);
+            wrapText(ctx, quoteText, 130, 1130, 820, 42);
         }
 
         function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
@@ -606,12 +823,13 @@
         function downloadCard() {
             const canvas = document.getElementById('wrappedCanvas');
             const link = document.createElement('a');
-            link.download = 'habit_wrapped_card.png';
+            link.download = 'custom_wrapped_card.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
 
         window.onload = () => {
+            initDatePickers();
             renderGrid();
             drawCard();
         };
