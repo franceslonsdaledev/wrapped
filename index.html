@@ -13,6 +13,7 @@
             --text-main: #fffffe;
             --text-muted: #a7a9be;
             --border: #2a2640;
+            --danger: #ff5555;
         }
 
         * {
@@ -112,7 +113,7 @@
         /* Habit Table Grid */
         .table-wrapper {
             overflow-x: auto;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         table {
@@ -123,7 +124,7 @@
         }
 
         th, td {
-            padding: 6px 4px;
+            padding: 8px 4px;
             border-bottom: 1px solid var(--border);
         }
 
@@ -132,12 +133,25 @@
             font-weight: 600;
         }
 
-        td.habit-name {
+        td.habit-info {
             text-align: left;
+            padding-right: 12px;
+        }
+
+        .habit-title {
             font-weight: 600;
             color: var(--text-main);
-            padding-right: 12px;
-            white-space: nowrap;
+            display: block;
+        }
+
+        .habit-badge {
+            font-size: 0.7rem;
+            color: var(--primary);
+            background: rgba(255, 117, 140, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 2px;
         }
 
         input[type="checkbox"] {
@@ -158,6 +172,68 @@
             background-size: 14px;
             background-position: center;
             background-repeat: no-repeat;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px 8px;
+            transition: color 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: var(--danger);
+        }
+
+        /* Add Habit Form */
+        .add-habit-form {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-row input, .form-row select {
+            padding: 8px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--border);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .add-btn:hover {
+            background: rgba(255, 117, 140, 0.2);
+            color: var(--primary);
         }
 
         /* Input fields for vibes */
@@ -226,17 +302,13 @@
             opacity: 0.95;
             transform: translateY(-1px);
         }
-
-        .download-btn:active {
-            transform: translateY(1px);
-        }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Wrapped & Tracked</h1>
-        <p>Tick off your habits across the month and instantly generate your aesthetic summary card.</p>
+        <p>Custom habit tracking with movement targets and daily streak summaries.</p>
     </header>
 
     <div class="main-container">
@@ -253,15 +325,30 @@
             </div>
 
             <div class="section-title">
-                <span>Monthly Habit Tracker (Days 1 - 7)</span>
-                <span style="font-size: 0.75rem; color: var(--text-muted);">Click boxes to log</span>
+                <span>Manage Habits & Days</span>
             </div>
+
+            <!-- Add Habit Form -->
+            <div class="add-habit-form">
+                <div class="form-row">
+                    <input type="text" id="newHabitName" placeholder="Habit name (e.g. Gym Session)">
+                    <select id="newHabitType">
+                        <option value="daily">Daily Habit (%)</option>
+                        <option value="movement">Movement (Target/Wk)</option>
+                    </select>
+                    <input type="number" id="newHabitTarget" value="3" min="1" max="7" title="Target per week (Movement only)">
+                </div>
+                <button class="add-btn" onclick="addHabit()">+ Add New Habit</button>
+            </div>
+
+            <!-- Habit Table -->
             <div class="table-wrapper">
                 <table>
                     <thead>
                         <tr>
-                            <th class="habit-name">Habit</th>
+                            <th class="habit-info">Habit</th>
                             <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="habit-grid">
@@ -284,7 +371,6 @@
         <!-- Live Preview Panel -->
         <div class="preview-panel">
             <div class="section-title" style="width: 100%; margin-bottom: 16px;">Live Card Preview</div>
-            <!-- Hidden high-res canvas (1080x1350) -->
             <canvas id="wrappedCanvas" width="1080" height="1350"></canvas>
             <button class="download-btn" onclick="downloadCard()">Download Card (PNG)</button>
         </div>
@@ -304,30 +390,41 @@
             currentTheme = themes[themeName];
             document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            
-            // Update UI primary CSS variable
             document.documentElement.style.setProperty('--primary', currentTheme.accent);
             drawCard();
         }
 
-        // Initialize Habit Data (4 core habits across 7 days)
-        const habits = [
-            { name: "💻 Coding / CS", checks: [true, true, false, true, true, false, true] },
-            { name: "🏃‍♀️ Running / Gym", checks: [true, false, true, true, false, true, true] },
-            { name: "📚 Deep Work", checks: [false, true, true, true, true, true, false] },
-            { name: "💧 Hydration Goal", checks: [true, true, true, true, true, true, true] }
+        // Initial Habit Data supporting types: 'daily' or 'movement'
+        let habits = [
+            { id: 1, name: "💻 Coding / CS", type: "daily", target: 7, checks: [true, true, false, true, true, false, true] },
+            { id: 2, name: "🏋️‍♀️ Gym Session", type: "movement", target: 2, checks: [true, false, true, false, false, false, false] },
+            { id: 3, name: "🏃‍♀️ Running", type: "movement", target: 3, checks: [false, true, true, false, true, false, false] },
+            { id: 4, name: "💧 Hydration", type: "daily", target: 7, checks: [true, true, true, true, true, true, true] }
         ];
 
         function renderGrid() {
             const tbody = document.getElementById('habit-grid');
             tbody.innerHTML = '';
+            
             habits.forEach((habit, hIndex) => {
                 let tr = document.createElement('tr');
-                let tdName = document.createElement('td');
-                tdName.className = 'habit-name';
-                tdName.innerText = habit.name;
-                tr.appendChild(tdName);
+                
+                let tdInfo = document.createElement('td');
+                tdInfo.className = 'habit-info';
+                
+                let titleSpan = document.createElement('span');
+                titleSpan.className = 'habit-title';
+                titleSpan.innerText = habit.name;
+                tdInfo.appendChild(titleSpan);
 
+                let badgeSpan = document.createElement('span');
+                badgeSpan.className = 'habit-badge';
+                badgeSpan.innerText = habit.type === 'movement' ? `Target: ${habit.target}x/wk` : 'Daily Habit';
+                tdInfo.appendChild(badgeSpan);
+                
+                tr.appendChild(tdInfo);
+
+                // 7 day checkboxes
                 habit.checks.forEach((isChecked, dIndex) => {
                     let td = document.createElement('td');
                     let checkbox = document.createElement('input');
@@ -340,8 +437,43 @@
                     td.appendChild(checkbox);
                     tr.appendChild(td);
                 });
+
+                // Delete button
+                let tdAction = document.createElement('td');
+                let delBtn = document.createElement('button');
+                delBtn.className = 'delete-btn';
+                delBtn.innerHTML = '&times;';
+                delBtn.title = 'Delete habit';
+                delBtn.onclick = () => {
+                    habits.splice(hIndex, 1);
+                    renderGrid();
+                    drawCard();
+                };
+                tdAction.appendChild(delBtn);
+                tr.appendChild(tdAction);
+
                 tbody.appendChild(tr);
             });
+        }
+
+        function addHabit() {
+            const nameInput = document.getElementById('newHabitName');
+            const typeSelect = document.getElementById('newHabitType');
+            const targetInput = document.getElementById('newHabitTarget');
+
+            if (!nameInput.value.trim()) return;
+
+            habits.push({
+                id: Date.now(),
+                name: nameInput.value.trim(),
+                type: typeSelect.value,
+                target: parseInt(targetInput.value) || 3,
+                checks: [false, false, false, false, false, false, false]
+            });
+
+            nameInput.value = '';
+            renderGrid();
+            drawCard();
         }
 
         function drawCard() {
@@ -366,61 +498,75 @@
 
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 64px sans-serif";
-            ctx.fillText("MONTHLY WRAPPED", 80, 200);
+            ctx.fillText("WEEKLY WRAPPED", 80, 200);
 
             ctx.fillStyle = "#a7a9be";
             ctx.font = "32px sans-serif";
             ctx.fillText("NOV 02 - NOV 08 SUMMARY", 80, 260);
 
-            // Accent Pill Divider
             ctx.fillStyle = currentTheme.accent;
             ctx.fillRect(80, 310, 140, 8);
 
-            // 3. Compute stats from checkbox grid
-            let totalChecked = 0;
-            let totalPossible = habits.length * 7;
-            habits.forEach(h => h.checks.forEach(c => { if(c) totalChecked++; }));
-            let consistencyRate = Math.round((totalChecked / totalPossible) * 100);
+            // 3. Compute stats based on habit type categories
+            let dailyHabits = habits.filter(h => h.type === 'daily');
+            let movementHabits = habits.filter(h => h.type === 'movement');
 
-            // Stat Block 1: Consistency Score
+            // Daily consistency score
+            let dailyChecked = 0;
+            let dailyPossible = dailyHabits.length * 7;
+            dailyHabits.forEach(h => h.checks.forEach(c => { if(c) dailyChecked++; }));
+            let dailyScore = dailyPossible > 0 ? Math.round((dailyChecked / dailyPossible) * 100) : 100;
+
+            // Stat Block 1: Daily Consistency Score
             ctx.fillStyle = "#a7a9be";
             ctx.font = "30px sans-serif";
-            ctx.fillText("CONSISTENCY SCORE", 80, 420);
+            ctx.fillText("DAILY HABIT CONSISTENCY", 80, 420);
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 88px sans-serif";
-            ctx.fillText(`${consistencyRate}%`, 80, 510);
+            ctx.fillText(`${dailyScore}%`, 80, 510);
 
-            // Stat Block 2: Habits Completed
+            // Stat Block 2: Movement Breakdown (e.g., Gym: 2/2, Running: 2/3)
             ctx.fillStyle = "#a7a9be";
             ctx.font = "30px sans-serif";
-            ctx.fillText("HABITS COMPLETED", 80, 630);
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 88px sans-serif";
-            ctx.fillText(`${totalChecked} / ${totalPossible} TASKS`, 80, 720);
+            ctx.fillText("MOVEMENT TARGETS", 80, 630);
+
+            let moveY = 690;
+            if (movementHabits.length === 0) {
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 44px sans-serif";
+                ctx.fillText("No movement goals set", 80, moveY + 45);
+            } else {
+                movementHabits.forEach(h => {
+                    let actualCount = h.checks.filter(Boolean).length;
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "bold 40px sans-serif";
+                    ctx.fillText(`${h.name}:`, 80, moveY);
+                    
+                    ctx.fillStyle = currentTheme.accent;
+                    ctx.fillText(`${actualCount} / ${h.target} sessions`, 500, moveY);
+                    moveY += 60;
+                });
+            }
 
             // Stat Block 3: Heavy Rotation Audio
             ctx.fillStyle = "#a7a9be";
             ctx.font = "30px sans-serif";
-            ctx.fillText("HEAVY ROTATION AUDIO", 80, 840);
+            ctx.fillText("HEAVY ROTATION AUDIO", 80, 920);
             let trackText = document.getElementById('trackInput').value;
             ctx.fillStyle = currentTheme.accent;
-            ctx.font = "bold 44px sans-serif";
-            ctx.fillText(trackText, 80, 905);
+            ctx.font = "bold 42px sans-serif";
+            ctx.fillText(trackText, 80, 985);
 
             // 4. Footer Quote Card Box
             ctx.fillStyle = `rgb(${currentTheme.cardBg.join(',')})`;
             ctx.strokeStyle = "rgba(255,255,255,0.1)";
             ctx.lineWidth = 2;
-            
-            // Rounded rectangle helper
-            roundRect(ctx, 80, 1030, 920, 180, 24, true, true);
+            roundRect(ctx, 80, 1060, 920, 180, 24, true, true);
 
             ctx.fillStyle = "#e0e0e6";
             ctx.font = "italic 32px sans-serif";
             let quoteText = `"${document.getElementById('quoteInput').value}"`;
-            wrapText(ctx, quoteText, 130, 1100, 820, 45);
-
-            // Request browser display update
+            wrapText(ctx, quoteText, 130, 1130, 820, 45);
         }
 
         function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
@@ -465,7 +611,6 @@
             link.click();
         }
 
-        // Initialize on load
         window.onload = () => {
             renderGrid();
             drawCard();
